@@ -38,7 +38,7 @@
 #endif
 
 // Message type definitions
-#define MOTOR_COMMAND 1
+#define MOTOR_COMMAND 0x01
 #define MSGT_TIMER0 10
 #define MSGT_TIMER1 11
 #define MSGT_MAIN1 20

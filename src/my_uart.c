@@ -8,6 +8,7 @@
 #include "debug.h"
 
 static uart_comm *uc_ptr;
+unsigned char msgtype_uart = MSGTYPE;
 
 void uart_recv_int_handler() {
 
@@ -28,22 +29,22 @@ void uart_recv_int_handler() {
 #endif
 #endif
 
-        switch (msgtype) {
+        switch (msgtype_uart) {
 
             case MSGTYPE:
                 uc_ptr->Rx_buffer[0] = data;
                 uc_ptr->Rx_buflen++;
-                msgtype = LENGTH;
+                msgtype_uart = LENGTH;
                 break;
 
             case LENGTH:
                 if (uc_ptr->Rx_buflen == 1) {
                     uc_ptr->Rx_buffer[uc_ptr->Rx_buflen] = data;
                     uc_ptr->Rx_buflen++;
-                    msgtype = MESSAGE;
+                    msgtype_uart = MESSAGE;
                 } else {
                     uc_ptr->Rx_buflen = 0;
-                    msgtype = MSGTYPE;
+                    msgtype_uart = MSGTYPE;
                 }
                 break;
 
@@ -51,11 +52,11 @@ void uart_recv_int_handler() {
                 if (uc_ptr->Rx_buflen > uc_ptr->Rx_buffer[1]) {
                     uc_ptr->Rx_buffer[uc_ptr->Rx_buflen] = data;
                     uc_ptr->Rx_buflen++;
-                    msgtype = CHECKSUM;
+                    msgtype_uart = CHECKSUM;
                 } else {
                     uc_ptr->Rx_buffer[uc_ptr->Rx_buflen] = data;
                     uc_ptr->Rx_buflen++;
-                    msgtype = MESSAGE;
+                    msgtype_uart = MESSAGE;
                 }
                 break;
 
@@ -84,6 +85,7 @@ void uart_recv_int_handler() {
                         // TODO Send previous message again.
                     }
                 }
+                msgtype_uart = MSGTYPE;
                 uc_ptr->Rx_buflen = 0;
                 break;
 

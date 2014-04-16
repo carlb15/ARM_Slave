@@ -8,6 +8,7 @@
 #include <plib/i2c.h>
 #endif
 #include "my_i2c.h"
+#include "my_uart.h"
 #include <string.h>
 
 static i2c_comm *ic_ptr;
@@ -331,6 +332,7 @@ void i2c_configure_slave(unsigned char addr) {
 }
 
 void pass_sensor_values_to_i2c(unsigned char* msgbuffer, unsigned char length) {
+    validSensorFlag = 1;
     int i;
     for (i = 0; i < length; i++) {
         ic_ptr->sensor_buffer[i] = msgbuffer[i];
@@ -338,6 +340,7 @@ void pass_sensor_values_to_i2c(unsigned char* msgbuffer, unsigned char length) {
 }
 
 void pass_motor_values_to_i2c(unsigned char* msgbuffer, unsigned char length) {
+    validMotorFlag = 1;
     int i;
     for (i = 0; i < length; i++) {
         ic_ptr->motor_buffer[i] = msgbuffer[i];

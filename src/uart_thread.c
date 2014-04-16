@@ -28,9 +28,9 @@ int uart_lthread(uart_thread_struct *uptr, int msgtype, int length, unsigned cha
         DEBUG_ON(UART_DBG);
         DEBUG_OFF(UART_DBG);
         // Pass sensor message to i2c.
-        if (msgbuffer[0] == 0x03) {
+        if (msgbuffer[0] == SENSOR_OUT_OF_RANGE) {
             pass_sensor_values_to_i2c(msgbuffer, length);
-        } else if (msgbuffer[0] == 0x07) {
+        } else if (msgbuffer[0] == MOTOR_ENCODER) {
             pass_motor_values_to_i2c(msgbuffer, length);
         }
     }
