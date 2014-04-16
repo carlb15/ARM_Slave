@@ -4,6 +4,11 @@
 #include "messages.h"
 
 #define MAXI2CBUF MSGLEN
+#define CMDACKLEN 4
+#define SENSORLEN 6
+#define MOTORLEN 5
+#define MOTORCMDLEN 6
+
 typedef struct __i2c_comm {
     unsigned char buffer[MAXI2CBUF];
     unsigned char buflen;
@@ -15,11 +20,14 @@ typedef struct __i2c_comm {
     unsigned char outbuflen;
     unsigned char outbufind;
     unsigned char slave_addr;
-    unsigned char tx_buffer[MAXI2CBUF];
-    unsigned char tx_buflen;
+    unsigned char cmd_ack_buf[CMDACKLEN];
+    unsigned char sensor_buffer[MAXI2CBUF];
+    unsigned char motor_buffer[MAXI2CBUF];
+    unsigned char no_encoder_buffer[MAXI2CBUF];
+    unsigned char no_sensor_buffer[MAXI2CBUF];
 } i2c_comm;
 
-int validSensorFlag;
+int validSensorFlag, validMotorFlag;
 unsigned char motorBuff[6];
 
 #define I2C_IDLE 0x5
@@ -34,16 +42,11 @@ unsigned char motorBuff[6];
 #define I2C_ERR_MSGTOOLONG 0x7
 #define I2C_ERR_MSG_TRUNC 0x8
 
-
-
 void init_i2c(i2c_comm *);
 void i2c_int_handler(void);
-void start_i2c_slave_reply(unsigned char,unsigned char *);
+void start_i2c_slave_reply(unsigned char, unsigned char *);
 void i2c_configure_slave(unsigned char);
-void i2c_configure_master(unsigned char);
-unsigned char i2c_master_send(unsigned char,unsigned char *);
-unsigned char i2c_master_recv(unsigned char);
 void readMessages();
-void i2c_retrieve_buffer(int, unsigned char*);
-
+void pass_motor_values_to_i2c(unsigned char* msgbuffer, unsigned char length);
+void pass_sensor_values_to_i2c(unsigned char* msgbuffer, unsigned char length);
 #endif

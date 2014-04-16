@@ -28,30 +28,22 @@ void uart_recv_int_handler() {
 #endif
 #endif
 
-        if (!msgtype_flag && data == SENSOR_OUT_OF_BOUNDS) {
-            msgtype = SENSOR_MSGTYPE;
-        }
-
         switch (msgtype) {
 
-            case SENSOR_MSGTYPE:
-                if (!msgtype_flag) {
-                    uc_ptr->Rx_buffer[0] = data;
-                    uc_ptr->Rx_buflen++;
-                    msgtype_flag = 1;
-                    sendToARMFlag = 1;
-                    msgtype = SENSOR_LENGTH;
-                }
+            case MSGTYPE:
+                uc_ptr->Rx_buffer[0] = data;
+                uc_ptr->Rx_buflen++;
+                msgtype = LENGTH;
                 break;
 
-            case SENSOR_LENGTH:
-                if (msgtype_flag && sendToARMFlag) {
+            case LENGTH:
+                if (uc_ptr->Rx_buflen == 1) {
                     uc_ptr->Rx_buffer[uc_ptr->Rx_buflen] = data;
                     uc_ptr->Rx_buflen++;
                     msgtype = MESSAGE;
                 } else {
-                    msgtype = SENSOR_MSGTYPE;
-                    msgtype_flag = 0;
+                    uc_ptr->Rx_buflen = 0;
+                    msgtype = MSGTYPE;
                 }
                 break;
 
@@ -59,7 +51,6 @@ void uart_recv_int_handler() {
                 if (uc_ptr->Rx_buflen > uc_ptr->Rx_buffer[1]) {
                     uc_ptr->Rx_buffer[uc_ptr->Rx_buflen] = data;
                     uc_ptr->Rx_buflen++;
-                    msg_flag = 1;
                     msgtype = CHECKSUM;
                 } else {
                     uc_ptr->Rx_buffer[uc_ptr->Rx_buflen] = data;
@@ -69,7 +60,7 @@ void uart_recv_int_handler() {
                 break;
 
             case CHECKSUM:
-                if (msg_flag) {
+                if (uc_ptr->Rx_buflen > uc_ptr->Rx_buffer[1]) {
                     uc_ptr->Rx_buffer[uc_ptr->Rx_buflen] = data;
                     unsigned char checkSum = 0;
                     unsigned char bufLength = uc_ptr->Rx_buffer[1];
@@ -77,7 +68,7 @@ void uart_recv_int_handler() {
                     // Check for correct checksum.
                     int i = 0;
                     for (; i < uc_ptr->Rx_buffer[1]; i++) {
-                        checkSum ^= uc_ptr->Rx_buffer[i+2];
+                        checkSum ^= uc_ptr->Rx_buffer[i + 2];
                     }
 
                     if (checkSum != uc_ptr->Rx_buffer[uc_ptr->Rx_buflen]) {
@@ -85,17 +76,15 @@ void uart_recv_int_handler() {
                         uc_ptr->Rx_buflen = 0;
                         // TODO Generate Error Message for Incorrect Message
                         // ToMainHigh_sendmsg(uc_ptr->Rx_buflen, MSGT_I2C_DATA, (void *) uc_ptr->Rx_buffer);
-                    } else if (sendToARMFlag) {
+                    } else if (uc_ptr->Rx_buffer[0] != COMMAND_ACK || uc_ptr->Rx_buffer[0] != COMMAND_NACK) {
                         uc_ptr->Rx_buflen++;
                         // Send sensor data to the ARM.
                         ToMainHigh_sendmsg(uc_ptr->Rx_buflen, MSGT_UART_RCV, (void *) uc_ptr->Rx_buffer);
+                    } else if (uc_ptr->Rx_buffer[0] == COMMAND_NACK) {
+                        // TODO Send previous message again.
                     }
                 }
-
-                msgtype_flag = 0;
-                sendToARMFlag = 0;
                 uc_ptr->Rx_buflen = 0;
-                msg_flag = 0;
                 break;
 
             default:
@@ -126,11 +115,7 @@ void uart_send_int_handler() {
         PIE1bits.TX1IE = 0; // Clear TXIE to end write.
         uc_ptr->Tx_buflen = 0;
     } else {
-<<<<<<< HEAD
         Write1USART(uc_ptr->Tx_buffer[uc_ptr->Tx_buflen++]);
-=======
-        WriteUSART(uc_ptr->Tx_buffer[uc_ptr->Tx_buflen++]);
->>>>>>> 6c56c1ca634cf0c77d330afc29a918694412ee90
     }
 }
 
@@ -150,4 +135,6 @@ void uart_retrieve_buffer(int length, unsigned char* msgbuffer) {
     for (; i < length; i++) {
         uc_ptr->Tx_buffer[i] = msgbuffer[i];
     }
+    // Set UART TXF interrupt flag
+    PIE1bits.TX1IE = 0x1;
 }

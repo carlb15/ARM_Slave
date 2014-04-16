@@ -3,20 +3,18 @@
 
 #include "messages.h"
 
-<<<<<<< HEAD
-#define MOTOR_COMMAND 1
-#define SENSOR_OUT_OF_BOUNDS 3
-
-#define SENSOR_MSGTYPE 1
-#define SENSOR_LENGTH 2
-#define MESSAGE 4
-#define CHECKSUM 5
+#define SENSOR_OUT_OF_RANGE 0x03
+#define MOTOR_ENCODER 0x07
+#define COMMAND_ACK 0x10
+#define COMMAND_NACK 0x11
+#define MSGTYPE 1
+#define LENGTH 2
+#define MESSAGE 3
+#define CHECKSUM 4
 #define MAXUARTBUF 10
 
 
-=======
 #define MAXUARTBUF 10
->>>>>>> 6c56c1ca634cf0c77d330afc29a918694412ee90
 #if (MAXUARTBUF > MSGLEN)
 #define MAXUARTBUF MSGLEN
 #endif

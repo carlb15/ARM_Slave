@@ -8,7 +8,6 @@
 #include <plib/i2c.h>
 #endif
 #include "my_i2c.h"
-//#include "adc_int_handler.h"
 #include <string.h>
 
 static i2c_comm *ic_ptr;
@@ -29,51 +28,6 @@ unsigned char msgbuffer[20];
 //timer0_thread_struct t0thread_data; // info for timer0_lthread
 // Configure for I2C Master mode -- the variable "slave_addr" should be stored in
 //   i2c_comm (as pointed to by ic_ptr) for later use.
-
-<<<<<<< HEAD
-
-
-
-=======
-void i2c_configure_master(unsigned char slave_addr) {
-    // Your code goes here
-}
-
-// Sending in I2C Master mode [slave write]
-// 		returns -1 if the i2c bus is busy
-// 		return 0 otherwise
-// Will start the sending of an i2c message -- interrupt handler will take care of
-//   completing the message send.  When the i2c message is sent (or the send has failed)
-//   the interrupt handler will send an internal_message of type MSGT_MASTER_SEND_COMPLETE if
-//   the send was successful and an internal_message of type MSGT_MASTER_SEND_FAILED if the
-//   send failed (e.g., if the slave did not acknowledge).  Both of these internal_messages
-//   will have a length of 0.
-// The subroutine must copy the msg to be sent from the "msg" parameter below into
-//   the structure to which ic_ptr points [there is already a suitable buffer there].
-
-unsigned char i2c_master_send(unsigned char length, unsigned char *msg) {
-    // Your code goes here
-    return (0);
-}
-
-// Receiving in I2C Master mode [slave read]
-// 		returns -1 if the i2c bus is busy
-// 		return 0 otherwise
-// Will start the receiving of an i2c message -- interrupt handler will take care of
-//   completing the i2c message receive.  When the receive is complete (or has failed)
-//   the interrupt handler will send an internal_message of type MSGT_MASTER_RECV_COMPLETE if
-//   the receive was successful and an internal_message of type MSGT_MASTER_RECV_FAILED if the
-//   receive failed (e.g., if the slave did not acknowledge).  In the failure case
-//   the internal_message will be of length 0.  In the successful case, the
-//   internal_message will contain the message that was received [where the length
-//   is determined by the parameter passed to i2c_master_recv()].
-// The interrupt handler will be responsible for copying the message received into
-
-unsigned char i2c_master_recv(unsigned char length) {
-    // Your code goes here
-    return (0);
-}
->>>>>>> 6c56c1ca634cf0c77d330afc29a918694412ee90
 
 void start_i2c_slave_reply(unsigned char length, unsigned char *msg) {
 
@@ -271,32 +225,22 @@ void i2c_int_handler() {
 
     if (msg_ready) {
         ic_ptr->buffer[ic_ptr->buflen] = ic_ptr->event_count;
+        // Send Motor command to the Master PIC
         ToMainHigh_sendmsg(ic_ptr->buflen + 1, MSGT_UART_SEND, (void *) ic_ptr->buffer);
         ic_ptr->buflen = 0;
     } else if (ic_ptr->error_count >= I2C_ERR_THRESHOLD) {
         error_buf[0] = ic_ptr->error_count;
         error_buf[1] = ic_ptr->error_code;
         error_buf[2] = ic_ptr->event_count;
-        ToMainHigh_sendmsg(sizeof (unsigned char) *3, MSGT_I2C_DBG, (void *) error_buf);
         ic_ptr->error_count = 0;
     }
     if (msg_to_send) {
         // send to the queue to *ask* for the data to be sent out
         readMessages();
-    };
-
+    }
 }
 
 
-<<<<<<< HEAD
-=======
-
-
-
-
-
-
->>>>>>> 6c56c1ca634cf0c77d330afc29a918694412ee90
 // set up the data structures for this i2c code
 // should be called once before any i2c routines are called
 
@@ -306,14 +250,27 @@ void init_i2c(i2c_comm * ic) {
     ic_ptr->event_count = 0;
     ic_ptr->status = I2C_IDLE;
     ic_ptr->error_count = 0;
-<<<<<<< HEAD
-    motorBuff[0] = 0x02;
-    int i = 1;
-    for (; i < 6; i++) {
-        motorBuff[i] = 0;
-    }
-=======
->>>>>>> 6c56c1ca634cf0c77d330afc29a918694412ee90
+
+    // Intialize CMD ACK response.
+    ic_ptr->cmd_ack_buf[0] = 0x10;
+    ic_ptr->cmd_ack_buf[1] = 0x01;
+    ic_ptr->cmd_ack_buf[2] = 0x02;
+    ic_ptr->cmd_ack_buf[3] = 0x02;
+
+    // Initialize No Encoder response
+    ic_ptr->no_encoder_buffer[0] = 0x09;
+    ic_ptr->no_encoder_buffer[1] = 0x00;
+    ic_ptr->no_encoder_buffer[2] = 0x00;
+    ic_ptr->no_encoder_buffer[3] = 0x00;
+    ic_ptr->no_encoder_buffer[4] = 0x00;
+
+    // Initialize No Sensor Response.
+    ic_ptr->no_sensor_buffer[0] = 0x02;
+    ic_ptr->no_sensor_buffer[1] = 0x00;
+    ic_ptr->no_sensor_buffer[2] = 0x00;
+    ic_ptr->no_sensor_buffer[3] = 0x00;
+    ic_ptr->no_sensor_buffer[4] = 0x00;
+    ic_ptr->no_sensor_buffer[5] = 0x00;
 }
 
 // setup the PIC to operate as a slave
@@ -373,24 +330,17 @@ void i2c_configure_slave(unsigned char addr) {
     // end of i2c configure
 }
 
-<<<<<<< HEAD
-void i2c_retrieve_buffer(int length, unsigned char* msgbuffer){
-    int i = 0;
-    ic_ptr->tx_buflen = length;
-    validSensorFlag = 1;
-=======
-void readMessages() {
+void pass_sensor_values_to_i2c(unsigned char* msgbuffer, unsigned char length) {
+    int i;
+    for (i = 0; i < length; i++) {
+        ic_ptr->sensor_buffer[i] = msgbuffer[i];
+    }
+}
 
-    unsigned char buf[1];
-    buf[0] = 0x1;
-
-    // Motorcontroller Read Command
-    length = 1;
-    start_i2c_slave_reply(length, buf);
->>>>>>> 6c56c1ca634cf0c77d330afc29a918694412ee90
-
-    for (; i < length; i++) {
-        ic_ptr->tx_buffer[i] = msgbuffer[i];
+void pass_motor_values_to_i2c(unsigned char* msgbuffer, unsigned char length) {
+    int i;
+    for (i = 0; i < length; i++) {
+        ic_ptr->motor_buffer[i] = msgbuffer[i];
     }
 }
 
@@ -399,23 +349,29 @@ void readMessages() {
     switch (ic_ptr->buffer[0]) {
         case 0x01:
         {
-            unsigned char buf[1];
-            buf[0] = 0x1;
-            // Motorcontroller Write Command
-            length = 1;
-            start_i2c_slave_reply(length, buf);
+            // Motorcontroller Write Command with Command ACK
+            start_i2c_slave_reply(CMDACKLEN, ic_ptr->cmd_ack_buf);
             break;
         }
         case 0x04:
         {
-            // ARM Polling for sensor data to determine if there is new sensor data
+            // ARM Polling for sensor data to determine if sensors are out of ranges
             if (validSensorFlag) {
                 validSensorFlag = 0;
-                start_i2c_slave_reply(ic_ptr->tx_buflen, ic_ptr->tx_buffer);
+                start_i2c_slave_reply(SENSORLEN, ic_ptr->sensor_buffer);
             } else {
-                length = 6;
-                start_i2c_slave_reply(length, motorBuff);
+                start_i2c_slave_reply(SENSORLEN, ic_ptr->no_sensor_buffer);
             }
+            break;
         }
+        case 0x07:
+            // Motor Encoder Request
+            if (validMotorFlag) {
+                validMotorFlag = 0;
+                start_i2c_slave_reply(MOTORLEN, ic_ptr->motor_buffer);
+            } else {
+                start_i2c_slave_reply(MOTORLEN, ic_ptr->no_encoder_buffer);
+            }
+            break;
     };
 }

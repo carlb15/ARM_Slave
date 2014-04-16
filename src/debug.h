@@ -14,9 +14,10 @@
 #define DO_DEBUG
 //      Use definitions to make debugging configurable
 
-#define UART_TX LATBbits.LATB1
-#define ADC_ISR LATBbits.LATB2
-
+#define UART_DBG LATBbits.LATB0
+#define I2C_DBG LATBbits.LATB1
+#define TMR0_DBG LATBbits.LATB2
+#define TMR1_DBG LATBbits.LATB3
 
 //      Define our debugging functions
 #ifdef  DO_DEBUG

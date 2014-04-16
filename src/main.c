@@ -213,7 +213,7 @@ void main(void) {
 #else
 #ifdef __USE18F46J50
     OSCCON = 0xE0; //see datasheet
-    OSCTUNEbits.PLLEN = 1;
+    OSCTUNEbits.PLLEN = 0;
 #else
     Something is messed up.
             The PIC selected is not supported or the preprocessor directives are wrong.
@@ -249,7 +249,7 @@ void main(void) {
     OpenTimer1(TIMER_INT_ON & T1_SOURCE_FOSC_4 & T1_PS_1_8 & T1_16BIT_RW & T1_OSC1EN_OFF & T1_SYNC_EXT_OFF, 0x0);
 #else
 #ifdef __USE18F46J50
-    OpenTimer1(TIMER_INT_ON & T1_PS_1_8 & T1_16BIT_RW  & T1_OSC1EN_OFF & T1_SYNC_EXT_OFF,0x0);
+    OpenTimer1(TIMER_INT_ON & T1_PS_1_8 & T1_16BIT_RW & T1_OSC1EN_OFF & T1_SYNC_EXT_OFF, 0x0);
 #else
     OpenTimer1(TIMER_INT_ON & T1_PS_1_8 & T1_16BIT_RW & T1_SOURCE_INT & T1_OSC1EN_OFF & T1_SYNC_EXT_OFF);
 #endif
@@ -302,7 +302,7 @@ void main(void) {
     // Calculated Baud Rate = 48MHz / (4*(624 + 1)) = 19200
     // Error (19200 - 19200) / 19200 = 0
     Open1USART(USART_TX_INT_OFF & USART_RX_INT_ON & USART_ASYNCH_MODE & USART_EIGHT_BIT &
-            USART_CONT_RX & USART_BRGH_HIGH, 155);
+            USART_CONT_RX & USART_BRGH_HIGH, 39);
     BAUDCONbits.BRG16 = 0;
     RCSTAbits.SPEN = 1;
     RCSTAbits.CREN = 1;
@@ -348,34 +348,25 @@ void main(void) {
         if (length < 0) {
             // no message, check the error code to see if it is concern
             if (length != MSGQUEUE_EMPTY) {
-                // This case be handled by your code.
+                printf("Error: No message in high-priority queue.");
             }
         } else {
             switch (msgtype) {
-                case MSGT_TIMER0:
-                {
-                    timer0_lthread(&t0thread_data, msgtype, length, msgbuffer);
-                    break;
-                };
+
                 case MSGT_UART_SEND:
                 {
-                    uart_lthread(&uthread_data, MSGT_UART_SEND, length, msgbuffer);
+                    uart_lthread(&uthread_data, msgtype, length, msgbuffer);
                     break;
                 };
                 case MSGT_UART_RCV:
                 {
-<<<<<<< HEAD
-                    DEBUG_ON(UART_TX);
-                    DEBUG_OFF(UART_TX);
                     uart_lthread(&uthread_data, MSGT_UART_RCV, length, msgbuffer);
-=======
-                    uart_lthread(&uthread_data, MSGT_UART_DATA, length, msgbuffer);
->>>>>>> 6c56c1ca634cf0c77d330afc29a918694412ee90
                     break;
                 };
+
                 default:
                 {
-                    // Your code should handle this error
+                    printf("Error: End of high-priority queue.");
                     break;
                 };
             };
@@ -383,25 +374,22 @@ void main(void) {
 
         // Check the low priority queue
         length = ToMainLow_recvmsg(MSGLEN, &msgtype, (void *) msgbuffer);
-        if (length < 0) {
-            // no message, check the error code to see if it is concern
-            if (length != MSGQUEUE_EMPTY) {
-                // Your code should handle this situation
-            }
-        } else {
-            switch (msgtype) {
-                case MSGT_TIMER1:
-                {
-                    timer1_lthread(&t1thread_data, msgtype, length, msgbuffer);
-                    break;
-                };
-                case MSGT_OVERRUN:
-                default:
-                {
-                    // Your code should handle this error
-                    break;
-                };
-            };
-        }
+        // if (length < 0) {
+        //            // no message, check the error code to see if it is concern
+        //            if (length != MSGQUEUE_EMPTY) {
+        //                printf("Error: No message in low-priority queue.");
+        //            }
+        //        } else {
+        //            switch (msgtype) {
+        //
+        //
+        //
+        //                    //                default:
+        //                    //                {
+        //                    //                    printf("Error: End of low-priority queue.");
+        //                    //                    break;
+        //                    //                };
+        //            };
+        //        }
     }
 }
