@@ -8,7 +8,7 @@
 #define SENSORLEN 6
 #define MOTORLEN 5
 #define MOTORCMDLEN 6
-
+#define STOPLEN 3
 typedef struct __i2c_comm {
     unsigned char buffer[MAXI2CBUF];
     unsigned char buflen;

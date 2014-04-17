@@ -19,8 +19,11 @@ int uart_lthread(uart_thread_struct *uptr, int msgtype, int length, unsigned cha
         DEBUG_OFF(UART_DBG);
         // Send Motor Command
         if (msgbuffer[0] == MOTOR_COMMAND) {
-            // Send ARM Commands to Master PIC.
+            // Send Motor Command to Master PIC.
             uart_retrieve_buffer(MOTORCMDLEN, msgbuffer);
+        } else if (msgbuffer[0] == STOP) {
+            // Send Stop Command to Master PIC.
+            uart_retrieve_buffer(STOPLEN, msgbuffer);
         }
     } else if (msgtype == MSGT_UART_RCV) {
         DEBUG_ON(UART_DBG);

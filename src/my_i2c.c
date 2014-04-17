@@ -350,13 +350,13 @@ void pass_motor_values_to_i2c(unsigned char* msgbuffer, unsigned char length) {
 void readMessages() {
 
     switch (ic_ptr->buffer[0]) {
-        case 0x01:
+        case MOTOR_COMMAND:
         {
-            // Motorcontroller Write Command with Command ACK
+            // Motorcontroller Move Command respond with Command ACK
             start_i2c_slave_reply(CMDACKLEN, ic_ptr->cmd_ack_buf);
             break;
         }
-        case 0x04:
+        case ARM_POLL:
         {
             // ARM Polling for sensor data to determine if sensors are out of ranges
             if (validSensorFlag) {
@@ -367,7 +367,13 @@ void readMessages() {
             }
             break;
         }
-        case 0x07:
+        case STOP:
+        {
+            // Motorcontroller Stop Command respond with Command ACK
+            start_i2c_slave_reply(CMDACKLEN, ic_ptr->cmd_ack_buf);
+            break;
+        }
+        case ENCODER_REQUEST:
             // Motor Encoder Request
             if (validMotorFlag) {
                 validMotorFlag = 0;
