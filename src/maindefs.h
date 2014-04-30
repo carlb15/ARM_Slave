@@ -42,6 +42,7 @@
 #define ARM_POLL 0x04
 #define STOP 0x05
 #define ENCODER_REQUEST 0x07
+#define SENSOR_REQUEST 0x12
 #define MSGT_TIMER0 10
 #define MSGT_TIMER1 11
 #define MSGT_MAIN1 20

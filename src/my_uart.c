@@ -6,6 +6,7 @@
 #endif
 #include "my_uart.h"
 #include "debug.h"
+#include "my_i2c.h"
 
 static uart_comm *uc_ptr;
 unsigned char msgtype_uart = MSGTYPE;
@@ -30,7 +31,6 @@ void uart_recv_int_handler() {
 #endif
 
         switch (msgtype_uart) {
-
             case MSGTYPE:
                 uc_ptr->Rx_buffer[0] = data;
                 uc_ptr->Rx_buflen++;
@@ -63,6 +63,7 @@ void uart_recv_int_handler() {
             case CHECKSUM:
                 if (uc_ptr->Rx_buflen > uc_ptr->Rx_buffer[1]) {
                     uc_ptr->Rx_buffer[uc_ptr->Rx_buflen] = data;
+                    uc_ptr->Rx_buflen++;
                     unsigned char checkSum = 0;
                     unsigned char bufLength = uc_ptr->Rx_buffer[1];
 
@@ -72,17 +73,22 @@ void uart_recv_int_handler() {
                         checkSum ^= uc_ptr->Rx_buffer[i + 2];
                     }
 
-                    if (checkSum != uc_ptr->Rx_buffer[uc_ptr->Rx_buflen]) {
-                        // Drop the message
-                        uc_ptr->Rx_buflen = 0;
-                        // TODO Generate Error Message for Incorrect Message
-                        // ToMainHigh_sendmsg(uc_ptr->Rx_buflen, MSGT_I2C_DATA, (void *) uc_ptr->Rx_buffer);
-                    } else if (uc_ptr->Rx_buffer[0] != COMMAND_ACK || uc_ptr->Rx_buffer[0] != COMMAND_NACK) {
-                        uc_ptr->Rx_buflen++;
-                        // Send sensor data to the ARM.
+                    if (uc_ptr->Rx_buflen != uc_ptr->Rx_buffer[1] + 3) {
+                        // Message has been scrambled.
+                        uc_ptr->Rx_buffer[0] == COMMAND_NACK;
+                    }
+
+                    if (checkSum != uc_ptr->Rx_buffer[uc_ptr->Rx_buflen - 1] || uc_ptr->Rx_buffer[0] == COMMAND_NACK) {
+                        // Send previous message again.
+                        ToMainHigh_sendmsg(uc_ptr->Tx_buflen, MSGT_UART_SEND, (void *) uc_ptr->Tx_buffer);
+                    } else if (uc_ptr->Rx_buffer[0] != COMMAND_ACK) {
+                        // Send sensor or motor encoder data to the ARM.
                         ToMainHigh_sendmsg(uc_ptr->Rx_buflen, MSGT_UART_RCV, (void *) uc_ptr->Rx_buffer);
-                    } else if (uc_ptr->Rx_buffer[0] == COMMAND_NACK) {
-                        // TODO Send previous message again.
+                        // Return an ACK to the Master.
+                        ToMainLow_sendmsg(CMD_ACKLEN, MSGT_UART_SEND, (void *) uc_ptr->cmd_ack_buf);
+                    } else if (uc_ptr->Rx_buffer[0] == COMMAND_ACK) {
+                        // Allow ARM to send a new motor command.
+                        motorCommandSent = 1;
                     }
                 }
                 msgtype_uart = MSGTYPE;
@@ -126,6 +132,12 @@ void init_uart_recv(uart_comm * uc) {
     uc_ptr->Tx_buflen = 0;
     uc_ptr->Rx_buflen = 0;
     uc_ptr->msg_length = 0;
+
+    // Intialize CMD ACK response.
+    uc_ptr->cmd_ack_buf[0] = 0x10;
+    uc_ptr->cmd_ack_buf[1] = 0x01;
+    uc_ptr->cmd_ack_buf[2] = 0x02;
+    uc_ptr->cmd_ack_buf[3] = 0x02;
 }
 
 void uart_retrieve_buffer(int length, unsigned char* msgbuffer) {

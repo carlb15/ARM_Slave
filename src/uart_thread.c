@@ -24,6 +24,9 @@ int uart_lthread(uart_thread_struct *uptr, int msgtype, int length, unsigned cha
         } else if (msgbuffer[0] == STOP) {
             // Send Stop Command to Master PIC.
             uart_retrieve_buffer(STOPLEN, msgbuffer);
+        } else if (msgbuffer[0] == COMMAND_ACK || msgbuffer[0] == COMMAND_NACK) {
+            // Send NACK or ACK command
+            uart_retrieve_buffer(CMDACKLEN, msgbuffer);
         }
     } else if (msgtype == MSGT_UART_RCV) {
         DEBUG_ON(UART_DBG);

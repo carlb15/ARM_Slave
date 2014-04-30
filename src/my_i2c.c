@@ -17,6 +17,8 @@ signed char length;
 unsigned char msgtype;
 unsigned char last_reg_recvd;
 signed char status;
+int sensor_buffer_status = 0;
+int motor_buffer_status = 0;
 //timer0_thread_struct t0thread_data; // info for timer0_lthread
 
 //uart_comm uc;
@@ -258,6 +260,12 @@ void init_i2c(i2c_comm * ic) {
     ic_ptr->cmd_ack_buf[2] = 0x02;
     ic_ptr->cmd_ack_buf[3] = 0x02;
 
+    // Intialize CMD ACK response.
+    ic_ptr->cmd_nack_buf[0] = 0x11;
+    ic_ptr->cmd_nack_buf[1] = 0x01;
+    ic_ptr->cmd_nack_buf[2] = 0x02;
+    ic_ptr->cmd_nack_buf[3] = 0x02;
+
     // Initialize No Encoder response
     ic_ptr->no_encoder_buffer[0] = 0x09;
     ic_ptr->no_encoder_buffer[1] = 0x00;
@@ -332,19 +340,19 @@ void i2c_configure_slave(unsigned char addr) {
 }
 
 void pass_sensor_values_to_i2c(unsigned char* msgbuffer, unsigned char length) {
-    validSensorFlag = 1;
     int i;
     for (i = 0; i < length; i++) {
         ic_ptr->sensor_buffer[i] = msgbuffer[i];
     }
+    validSensorFlag = 1;
 }
 
 void pass_motor_values_to_i2c(unsigned char* msgbuffer, unsigned char length) {
-    validMotorFlag = 1;
     int i;
     for (i = 0; i < length; i++) {
         ic_ptr->motor_buffer[i] = msgbuffer[i];
     }
+    validMotorFlag = 1;
 }
 
 void readMessages() {
@@ -352,18 +360,19 @@ void readMessages() {
     switch (ic_ptr->buffer[0]) {
         case MOTOR_COMMAND:
         {
-            // Motorcontroller Move Command respond with Command ACK
-            start_i2c_slave_reply(CMDACKLEN, ic_ptr->cmd_ack_buf);
+            // Waiting for Master to ACK message
+            start_i2c_slave_reply(CMDNACKLEN, ic_ptr->cmd_nack_buf);
             break;
         }
         case ARM_POLL:
         {
-            // ARM Polling for sensor data to determine if sensors are out of ranges
-            if (validSensorFlag) {
-                validSensorFlag = 0;
-                start_i2c_slave_reply(SENSORLEN, ic_ptr->sensor_buffer);
+            if (motorCommandSent) {
+                motorCommandSent = 0;
+                // Motorcontroller Move Command was succesfully sent to Master PIC.
+                start_i2c_slave_reply(CMDACKLEN, ic_ptr->cmd_ack_buf);
             } else {
-                start_i2c_slave_reply(SENSORLEN, ic_ptr->no_sensor_buffer);
+                // Waiting for Master to ACK message
+                start_i2c_slave_reply(CMDNACKLEN, ic_ptr->cmd_nack_buf);
             }
             break;
         }
@@ -374,6 +383,7 @@ void readMessages() {
             break;
         }
         case ENCODER_REQUEST:
+        {
             // Motor Encoder Request
             if (validMotorFlag) {
                 validMotorFlag = 0;
@@ -382,5 +392,16 @@ void readMessages() {
                 start_i2c_slave_reply(MOTORLEN, ic_ptr->no_encoder_buffer);
             }
             break;
+        }
+        case SENSOR_REQUEST:
+        {
+            if (validSensorFlag) {
+                // ARM Polling for sensor data to determine if sensors are out of ranges
+                validSensorFlag = 0;
+                start_i2c_slave_reply(SENSORLEN, ic_ptr->sensor_buffer);
+            } else {
+                start_i2c_slave_reply(SENSORLEN, ic_ptr->no_sensor_buffer);
+            }
+        }
     };
 }

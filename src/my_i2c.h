@@ -5,6 +5,7 @@
 
 #define MAXI2CBUF MSGLEN
 #define CMDACKLEN 4
+#define CMDNACKLEN 4
 #define SENSORLEN 6
 #define MOTORLEN 5
 #define MOTORCMDLEN 6
@@ -21,13 +22,14 @@ typedef struct __i2c_comm {
     unsigned char outbufind;
     unsigned char slave_addr;
     unsigned char cmd_ack_buf[CMDACKLEN];
+    unsigned char cmd_nack_buf[CMDACKLEN];
     unsigned char sensor_buffer[MAXI2CBUF];
     unsigned char motor_buffer[MAXI2CBUF];
     unsigned char no_encoder_buffer[MAXI2CBUF];
     unsigned char no_sensor_buffer[MAXI2CBUF];
 } i2c_comm;
 
-int validSensorFlag, validMotorFlag;
+int validSensorFlag, validMotorFlag, motorCommandSent;
 unsigned char motorBuff[6];
 
 #define I2C_IDLE 0x5

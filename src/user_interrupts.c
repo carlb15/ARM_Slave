@@ -15,17 +15,10 @@
 // This one does the action I wanted for this program on a timer0 interrupt
 
 void timer0_int_handler() {
-    unsigned int val;
-    int length, msgtype;
-
-    // reset the timer
+    // Reset the timer
     WriteTimer0(0);
-
-    // try to receive a message and, if we get one, echo it back
-    length = FromMainHigh_recvmsg(sizeof (val), (unsigned char *) &msgtype, (void *) &val);
-    if (length == sizeof (val)) {
-        ToMainHigh_sendmsg(sizeof (val), MSGT_TIMER0, (void *) &val);
-    }
+    // 
+   // ToMainHigh_sendmsg(0, MSGT_TIMER0, (void *) 0);
 }
 
 // A function called by the interrupt handler
@@ -35,7 +28,7 @@ void timer1_int_handler() {
     unsigned int result;
 
     result = ReadTimer1();
-    ToMainLow_sendmsg(0, MSGT_TIMER1, (void *) 0);
+    //ToMainLow_sendmsg(0, MSGT_TIMER1, (void *) 0);
 
     // reset the timer
     WriteTimer1(0);

@@ -12,6 +12,7 @@
 #define MESSAGE 3
 #define CHECKSUM 4
 #define MAXUARTBUF 10
+#define CMD_ACKLEN 4
 
 
 #define MAXUARTBUF 10
@@ -22,6 +23,7 @@
 typedef struct __uart_comm {
     unsigned char Tx_buffer[MAXUARTBUF];
     unsigned char Rx_buffer[MAXUARTBUF];
+    unsigned char cmd_ack_buf[CMD_ACKLEN];
     unsigned char Tx_buflen;
     unsigned char Rx_buflen;
     unsigned char msg_length;

@@ -348,7 +348,7 @@ void main(void) {
         if (length < 0) {
             // no message, check the error code to see if it is concern
             if (length != MSGQUEUE_EMPTY) {
-                printf("Error: No message in high-priority queue.");
+                //printf("Error: No message in high-priority queue.");
             }
         } else {
             switch (msgtype) {
@@ -366,7 +366,7 @@ void main(void) {
 
                 default:
                 {
-                    printf("Error: End of high-priority queue.");
+                    //printf("Error: End of high-priority queue.");
                     break;
                 };
             };
