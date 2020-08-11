@@ -1,4 +1,4 @@
-ARM_Slave
+ARM_Worker
 =========
 
-The ARM Slave PIC for handling communication between the ARM and the rover
+The ARM Worker PIC for handling communication between the ARM and the rover
